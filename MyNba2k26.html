@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roue de création de joueur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F1EEDD;
+    --surface: #F8F6EA;
+    --border: #DDD6B8;
+    --text: #241C12;
+    --text-muted: #7A6E52;
+    --accent: #E0621B;
+    --accent-hover: #C1530F;
+    --accent-ink: #FFFFFF;
+    --brown: #2B1D12;
+    --font-display: 'Barlow Condensed', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 4rem;
+  }
+
+  .screen[hidden]{ display: none; }
+
+  header{ margin-bottom: 2.2rem; }
+
+  .header-top{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 6vw, 2.8rem);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+    margin: 0 0 0.7rem;
+  }
+
+  p.lede{
+    color: var(--text-muted);
+    max-width: 52ch;
+    margin: 0;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .progress-label{
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .progress-label b{ color: var(--text); font-weight: 600; }
+
+  .progress-frac{
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .progress-bar{
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1.4rem;
+  }
+
+  .progress-bar-fill{
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.25s ease;
+  }
+
+  .btn-draw{
+    display: block;
+    width: 100%;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    padding: 0.85rem 1.4rem;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .btn-draw:hover{ background: var(--accent-hover); }
+
+  .btn-draw:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn-draw.is-reset{
+    background: var(--surface);
+    color: var(--brown);
+    border: 1px solid var(--border);
+  }
+
+  .btn-draw.is-reset:hover{ background: var(--bg); }
+
+  .btn-draw:disabled{
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .btn-secondary{
+    display: block;
+    width: 100%;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: transparent;
+    color: var(--brown);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.4rem;
+    border-radius: 7px;
+    cursor: pointer;
+    margin-top: 0.9rem;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .btn-secondary:hover{ background: var(--bg); }
+
+  .btn-secondary:disabled{
+    opacity: 0.55;
+    cursor: default;
+    background: var(--bg);
+  }
+
+  .btn-link{
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .btn-link:hover{ color: var(--text); }
+
+  .hint{
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.9rem 0 0;
+  }
+
+  .sheet-title{
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 0.9rem;
+  }
+
+  table.stat-table{
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .stat-table tr{ border-bottom: 1px solid var(--border); }
+  .stat-table tr:last-child{ border-bottom: none; }
+
+  .stat-table td{
+    padding: 0.8rem 0.2rem;
+    vertical-align: middle;
+  }
+
+  .stat-table td.label{
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    width: 46%;
+  }
+
+  .stat-table td.value{
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--brown);
+    text-align: right;
+  }
+
+  .stat-table tr.is-empty td.label{ opacity: 0.6; }
+  .stat-table tr.is-empty td.value{ color: var(--text-muted); font-weight: 400; opacity: 0.6; }
+
+  .stat-table tr.is-filled td.value{ animation: rowFill 0.3s ease; }
+
+  @keyframes rowFill{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stat-table tr.is-filled td.value{ animation: none; }
+  }
+
+  /* ---------- Attribute categories (page 2) ---------- */
+
+  .attr-card{ padding: 0; overflow: hidden; }
+
+  .attr-group + .attr-group{ border-top: 3px solid var(--surface); }
+
+  .attr-group-label{
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.1rem 0.3rem;
+    opacity: 0.85;
+  }
+
+  .attr-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 1.1rem;
+  }
+
+  .attr-row .attr-name{
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  .attr-row .attr-value{
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.95rem;
+    min-width: 2.4em;
+    text-align: right;
+    opacity: 0.55;
+  }
+
+  .attr-row.is-filled .attr-value{
+    opacity: 1;
+    animation: rowFill 0.3s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .attr-row.is-filled .attr-value{ animation: none; }
+  }
+
+  /* ---------- Roster (page 3) ---------- */
+
+  .roster-empty{
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin: 0;
+  }
+
+  .roster-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0.2rem;
+  }
+
+  .roster-row + .roster-row{ border-top: 1px solid var(--border); }
+
+  .roster-name{
+    font-weight: 700;
+    font-size: 0.98rem;
+  }
+
+  .roster-meta{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+  }
+
+  .roster-overall{
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .roster-delete{
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 0.9rem;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+
+  .roster-delete:hover{ color: var(--accent-hover); }
+
+  /* ---------- Progression (page 4) ---------- */
+
+  .stat-select{
+    display: block;
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .stat-form{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .stat-field label{
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .stat-field input{
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .stat-field input:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .prog-overall-row{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 1rem 1.1rem;
+    background: var(--bg);
+    font-family: var(--font-mono);
+  }
+
+  .prog-overall-row .label{
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .prog-overall-row .value{
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brown);
+  }
+
+  .prog-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 1.1rem;
+  }
+
+  .prog-row .attr-name{
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  .prog-row .prog-change{
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .prog-row .prog-delta{
+    font-weight: 700;
+    margin-left: 0.5rem;
+  }
+
+  .prog-delta.up{ color: #2E7D32; }
+  .prog-delta.down{ color: #B3261E; }
+  .prog-delta.flat{ color: var(--text-muted); }
+
+  @media (max-width: 480px){
+    .stat-form{ grid-template-columns: 1fr; }
+  }
+
+  footer{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 480px){
+    .card{ padding: 1.3rem; }
+    .progress-row{ flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+    .attr-row{ padding: 0.6rem 0.9rem; }
+    .roster-row{ flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- PAGE 1 : profil du rookie -->
+  <section class="screen" id="page1">
+    <header>
+      <div class="header-top">
+        <p class="eyebrow">Générateur MyNBA</p>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn-link" id="progNavBtn" type="button">Faire évoluer un joueur</button>
+          <button class="btn-link" id="rosterNavBtn" type="button">Mon effectif (0)</button>
+        </div>
+      </div>
+      <h1>Roue de création de joueur</h1>
+      <p class="lede">Tirez un profil de rookie complet en 8 étapes, cohérent du nom jusqu'aux points forts, prêt à être recréé dans NBA 2K.</p>
+    </header>
+
+    <div class="card">
+      <div class="progress-row">
+        <span class="progress-label" id="progressLabel">Étape <b>1</b> sur 8 - Identité</span>
+        <span class="progress-frac" id="progressFrac">0/8</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+
+      <button class="btn-draw" id="drawBtn" type="button">Tirer : Nom et nationalité</button>
+      <p class="hint" id="hint">Rien n'est encore enregistré. Chaque clic tire la prochaine caractéristique.</p>
+    </div>
+
+    <div class="card">
+      <p class="sheet-title">Fiche joueur</p>
+      <table class="stat-table" id="statTable">
+        <tbody>
+          <tr class="is-empty" data-row="nom"><td class="label">Nom</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="nationalite"><td class="label">Nationalité</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="poste"><td class="label">Poste</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="taille"><td class="label">Taille</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="poids"><td class="label">Poids</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="envergure"><td class="label">Envergure</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="style"><td class="label">Style de jeu</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="comparaison"><td class="label">Joueur de comparaison</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="overall"><td class="label">Overall rookie</td><td class="value">-</td></tr>
+          <tr class="is-empty" data-row="points"><td class="label">Points forts</td><td class="value">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>Le tirage en cours n'est pas sauvegardé automatiquement - utilisez "Sauvegarder ce joueur" à la dernière étape pour l'ajouter à votre effectif (conservé dans ce navigateur).</footer>
+  </section>
+
+  <!-- PAGE 2 : attributs détaillés -->
+  <section class="screen" id="page2" hidden>
+    <header>
+      <p class="eyebrow" id="attrEyebrow">Générateur MyNBA</p>
+      <h1>Attributs du joueur</h1>
+      <p class="lede" id="attrLede">Les attributs sont générés à partir du poste, du style de jeu et des points forts tirés à la page précédente.</p>
+    </header>
+
+    <div class="card">
+      <button class="btn-draw" id="attrBtn" type="button">Tirer les attributs du joueur</button>
+      <button class="btn-secondary" id="saveBtn" type="button" hidden>Sauvegarder ce joueur</button>
+      <p class="hint" id="attrHint">Un seul tirage révèle les 34 attributs de jeu, regroupés par catégorie, plus la durabilité et les stats générales.</p>
+    </div>
+
+    <div class="card attr-card">
+      <div id="attrList"></div>
+    </div>
+
+    <button class="btn-link" id="backBtn" type="button">&larr; Retour au profil</button>
+  </section>
+
+  <!-- PAGE 3 : effectif sauvegardé -->
+  <section class="screen" id="page3" hidden>
+    <header>
+      <p class="eyebrow">Générateur MyNBA</p>
+      <h1>Mon effectif</h1>
+      <p class="lede">Les joueurs sauvegardés ici sont conservés dans ce navigateur et serviront de base au système de progression.</p>
+    </header>
+
+    <div class="card">
+      <div id="rosterList"></div>
+    </div>
+
+    <button class="btn-link" id="rosterBackBtn" type="button">&larr; Retour au générateur</button>
+  </section>
+
+  <!-- PAGE 4 : progression de saison -->
+  <section class="screen" id="page4" hidden>
+    <header>
+      <p class="eyebrow">Générateur MyNBA</p>
+      <h1>Progression de saison</h1>
+      <p class="lede">Choisissez un joueur sauvegardé, entrez ses statistiques de la saison, et ses attributs montent ou descendent selon ses performances et son poste.</p>
+    </header>
+
+    <div class="card">
+      <p class="sheet-title">Joueur</p>
+      <select class="stat-select" id="progPlayerSelect">
+        <option value="">Choisir un joueur sauvegardé...</option>
+      </select>
+      <p class="hint" id="progEmptyHint" hidden>Aucun joueur sauvegardé. Créez-en un depuis le générateur puis revenez ici.</p>
+    </div>
+
+    <div class="card" id="progFormCard" hidden>
+      <p class="sheet-title">Statistiques de la saison (moyennes par match)</p>
+      <div class="stat-form" id="statForm"></div>
+      <button class="btn-draw" id="applyProgBtn" type="button">Appliquer la progression</button>
+      <p class="hint">Vitesse, agilité, force et détente ne bougent pas ici - ils reflètent des tests physiques, pas une saison jouée. Seule l'endurance évolue, en fonction des minutes par match.</p>
+    </div>
+
+    <div class="card attr-card" id="progResultsCard" hidden>
+      <div class="prog-overall-row" id="progOverallRow"></div>
+      <div id="progResultsList"></div>
+    </div>
+
+    <div id="progSaveRow" hidden>
+      <button class="btn-secondary" id="saveProgBtn" type="button">Enregistrer l'évolution</button>
+    </div>
+
+    <button class="btn-link" id="progBackBtn" type="button">&larr; Retour au générateur</button>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ROSTER_KEY = 'rcj_roster_v1';
+
+  var NATIONALITIES = [
+    { name: 'États-Unis', first: ['Marcus', 'DeAndre', 'Tyler', 'Jalen', 'Isaiah', 'Malik', 'Jordan', 'Anthony', 'Brandon', 'Xavier'], last: ['Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas'] },
+    { name: 'France', first: ['Victor', 'Théo', 'Killian', 'Mathis', 'Nicolas', 'Rudy', 'Evan', 'Sekou', 'Bilal', 'Ousmane'], last: ['Fournier', 'Gobert', 'Ntilikina', 'Yabusele', 'Poirier', 'Lessort', 'Diallo', 'Traoré', 'Camara', 'Diaw'] },
+    { name: 'Serbie', first: ['Nikola', 'Bogdan', 'Marko', 'Vasilije', 'Aleksa', 'Filip', 'Stefan', 'Dušan', 'Ognjen', 'Nemanja'], last: ['Jokić', 'Bogdanović', 'Gudurić', 'Mićić', 'Avramović', 'Petrović', 'Radović', 'Simić', 'Popović', 'Milošević'] },
+    { name: 'Canada', first: ['Shai', 'RJ', 'Andrew', 'Jamal', 'Kelly', 'Dillon', 'Cory', 'Luguentz', 'Nickeil', 'Chris'], last: ['Gilgeous-Alexander', 'Barrett', 'Wiggins', 'Murray', 'Olynyk', 'Brooks', 'Joseph', 'Dort', 'Alexander-Walker', 'Boucher'] },
+    { name: 'Espagne', first: ['Ricky', 'Juancho', 'Willy', 'Santi', 'Usman', 'Sergio', 'Pau', 'Marc', 'Álex', 'Víctor'], last: ['Rubio', 'Hernangómez', 'Hernangómez', 'Aldama', 'Garuba', 'Llull', 'Gasol', 'Gasol', 'Abrines', 'Claver'] },
+    { name: 'Australie', first: ['Ben', 'Josh', 'Patty', 'Dante', 'Matisse', 'Dyson', 'Joe', 'Jock', 'Duop', 'Will'], last: ['Simmons', 'Giddey', 'Mills', 'Exum', 'Thybulle', 'Daniels', 'Ingles', 'Landale', 'Reath', 'Magnay'] },
+    { name: 'Lituanie', first: ['Domantas', 'Jonas', 'Donatas', 'Marius', 'Mindaugas', 'Rokas', 'Ignas', 'Deividas', 'Arnas', 'Tadas'], last: ['Sabonis', 'Valančiūnas', 'Motiejūnas', 'Grigonis', 'Kuzminskas', 'Jokubaitis', 'Brazdeikis', 'Sirvydis', 'Velička', 'Vaščenkovas'] },
+    { name: 'Allemagne', first: ['Dennis', 'Franz', 'Moritz', 'Daniel', 'Isaac', 'Maodo', 'Johannes', 'Paul', 'Tristan', 'Andreas'], last: ['Schröder', 'Wagner', 'Wagner', 'Theis', 'Bonga', 'Lo', 'Voigtmann', 'Zipser', 'Da Silva', 'Obst'] },
+    { name: 'Nigeria', first: ['Precious', 'Josh', 'Ekpe', 'Chimezie', 'Al-Farouq', 'Michael', 'Ike', 'Semi', 'Ochai', 'Prince'], last: ['Achiuwa', 'Okogie', 'Udoh', 'Metu', 'Aminu', 'Onuaku', 'Anigbogu', 'Iroegbu', 'Ojeleye', 'Ali'] },
+    { name: 'Grèce', first: ['Giannis', 'Thanasis', 'Kostas', 'Nikos', 'Vassilis', 'Georgios', 'Dimitrios', 'Ioannis', 'Panagiotis', 'Alexandros'], last: ['Antetokounmpo', 'Papanikolaou', 'Spanoulis', 'Printezis', 'Papagiannis', 'Larentzakis', 'Sloukas', 'Mitoglou', 'Kalaitzakis', 'Papapetrou'] }
+  ];
+
+  var POSITIONS = ['Meneur', 'Arrière', 'Ailier', 'Ailier fort', 'Pivot'];
+
+  var HEIGHT_RANGES = {
+    'Meneur': [73, 76],
+    'Arrière': [76, 79],
+    'Ailier': [78, 81],
+    'Ailier fort': [80, 83],
+    'Pivot': [82, 86]
+  };
+
+  var WEIGHT_RANGES = {
+    'Meneur': [174, 198],
+    'Arrière': [190, 214],
+    'Ailier': [209, 238],
+    'Ailier fort': [229, 258],
+    'Pivot': [249, 280]
+  };
+
+  var ARCHETYPES = {
+    'Meneur': [
+      { name: 'Meneur scoreur', players: ['Damian Lillard', 'Ja Morant', 'Trae Young'], strengths: ['Création de tir', 'Tir longue distance'] },
+      { name: 'Distributeur pur', players: ['Chris Paul', 'Tyus Jones', 'Ricky Rubio'], strengths: ['Vision de jeu', 'Qualité de passe'] },
+      { name: 'Meneur physique', players: ['Russell Westbrook', 'Derrick Rose', 'Ben Simmons'], strengths: ['Explosivité', 'Attaque du cercle'] },
+      { name: 'Meneur défenseur', players: ['Alex Caruso', 'Patrick Beverley', 'Jrue Holiday'], strengths: ['Défense sur porteur', 'Anticipation des passes'] }
+    ],
+    'Arrière': [
+      { name: "Tireur d'élite", players: ['Klay Thompson', 'Duncan Robinson', 'Buddy Hield'], strengths: ['Tir à 3 points', 'Déplacement sans ballon'] },
+      { name: 'Scoreur explosif', players: ['Devin Booker', 'Donovan Mitchell', 'Zach LaVine'], strengths: ['Volume de scoring', 'Finition au cercle'] },
+      { name: 'Combo iso', players: ['Anfernee Simons', 'Jordan Poole', 'Tyler Herro'], strengths: ['Création en isolement', 'Tir mi-distance'] },
+      { name: 'Défenseur de périmètre', players: ['Lu Dort', 'Josh Hart', 'Herbert Jones'], strengths: ['Défense sur ailier', 'Activité défensive'] }
+    ],
+    'Ailier': [
+      { name: 'Ailier polyvalent 3&D', players: ['Mikal Bridges', 'OG Anunoby', 'Torrey Craig'], strengths: ['Tir extérieur', 'Défense polyvalente'] },
+      { name: 'Ailier créateur', players: ['LeBron James', 'Jayson Tatum', 'Paul George'], strengths: ['Création de jeu', 'Polyvalence offensive'] },
+      { name: 'Ailier tireur', players: ['Kevin Huerter', "Royce O'Neale", 'Doug McDermott'], strengths: ['Tir à 3 points', 'Mouvement sans ballon'] },
+      { name: 'Ailier défenseur', players: ['Andre Iguodala', 'Jae Crowder', 'Herbert Jones'], strengths: ['Défense sur plusieurs postes', 'Anticipation'] }
+    ],
+    'Ailier fort': [
+      { name: 'Stretch four', players: ['Bobby Portis', 'Kelly Olynyk', 'Christian Wood'], strengths: ['Tir à 3 points', 'Espacement du terrain'] },
+      { name: 'Intérieur polyvalent', players: ['Draymond Green', 'Pascal Siakam', 'Julius Randle'], strengths: ['Polyvalence', 'Facilitation'] },
+      { name: 'Finisseur athlétique', players: ['Zion Williamson', 'Blake Griffin', 'John Collins'], strengths: ['Finition au cercle', 'Explosivité'] },
+      { name: 'Protecteur de cercle', players: ['Jaren Jackson Jr.', 'Bam Adebayo', 'P.J. Washington'], strengths: ['Contres', 'Défense intérieure'] }
+    ],
+    'Pivot': [
+      { name: 'Pivot dos au panier', players: ['Joel Embiid', 'Nikola Jokić', 'Karl-Anthony Towns'], strengths: ['Jeu au poste', 'Finition près du cercle'] },
+      { name: 'Protecteur de cercle', players: ['Rudy Gobert', 'Myles Turner', 'Walker Kessler'], strengths: ['Contres', 'Défense intérieure'] },
+      { name: 'Pivot tireur', players: ['Kristaps Porziņģis', 'Brook Lopez', 'Karl-Anthony Towns'], strengths: ['Tir extérieur', 'Espacement du terrain'] },
+      { name: 'Finisseur lob', players: ['Clint Capela', 'Mitchell Robinson', 'Ivica Zubac'], strengths: ['Alley-oop', 'Rebond offensif'] }
+    ]
+  };
+
+  var STEPS = [
+    { label: 'Identité', button: 'Tirer : Nom et nationalité' },
+    { label: 'Poste', button: 'Tirer le poste' },
+    { label: 'Taille', button: 'Tirer : Taille' },
+    { label: 'Poids', button: 'Tirer : Poids' },
+    { label: 'Envergure', button: 'Tirer : Envergure' },
+    { label: 'Style de jeu', button: 'Tirer : Style de jeu' },
+    { label: 'Joueur de comparaison', button: 'Tirer : Joueur de comparaison' },
+    { label: 'Attributs rookie', button: 'Tirer : Attributs rookie' }
+  ];
+
+  var HINTS = [
+    "Rien n'est encore enregistré. Chaque clic tire la prochaine caractéristique.",
+    "Le poste fixe la fourchette de taille possible.",
+    "Le poids suit une fourchette réaliste pour ce poste.",
+    "L'envergure ajoute 2 à 6 pouces à la taille tirée.",
+    "Le style de jeu détermine les joueurs de comparaison possibles.",
+    "Le joueur de comparaison est choisi dans la liste du style tiré.",
+    "L'overall rookie fixe la cible que les attributs de jeu devront respecter.",
+    "Dernière étape : place aux attributs détaillés sur la page suivante."
+  ];
+
+  /* ---------- Catégories d'attributs (liste réelle NBA 2K) ---------- */
+
+  /* Catégories de compétence : ces 34 attributs entrent dans le calcul du général. */
+  var SKILL_CATEGORIES = [
+    { key: 'finition', label: 'Finition', bg: '#26348B', fg: '#FFFFFF', attrs: ['Tirs de près', 'Dunk en pénétration', 'Dunk sans élan', 'Double-pas en pénétration', 'Bras roulé au poste', 'Fadeaway au poste', 'Contrôle au poste', 'Adresse', 'Provocation de faute'] },
+    { key: 'shooting', label: 'Shooting', bg: '#1F6B33', fg: '#FFFFFF', attrs: ['Tirs à mi-distance', 'Tirs à 3 pts', 'Lancer franc', 'Intelligence de tir', 'Régularité offensive'] },
+    { key: 'playmaking', label: 'Playmaking', bg: '#D4B24C', fg: '#241C12', attrs: ['Contrôle du ballon', 'Vitesse avec ballon', 'Précision des passes', 'QI passes', 'Vision des passes'] },
+    { key: 'defenseRebond', label: 'Défense & Rebond', bg: '#8B1E1E', fg: '#FFFFFF', attrs: ['Rebond défensif', 'Rebond offensif', 'Défense intérieure', 'Défense extérieure', 'Contre', 'Interception', 'Perception des passes', 'Régularité défensive', 'Intelligence de soutien défensif'] },
+    { key: 'physique', label: 'Physique', bg: '#66605A', fg: '#FFFFFF', attrs: ['Agilité', 'Vitesse', 'Détente', 'Force', 'Endurance', 'Pressing'] }
+  ];
+
+  /* Résistance aux blessures par zone du corps - ne compte pas dans le général,
+     à l'image de l'onglet Durabilité séparé dans NBA 2K. */
+  var DURABILITY_CATEGORY = {
+    key: 'durabilite', label: 'Durabilité', bg: '#2E6B6B', fg: '#FFFFFF',
+    attrs: ['Résistance tête', 'Résistance cou', 'Résistance dos', 'Résistance épaule gauche', 'Résistance épaule droite', 'Résistance coude gauche', 'Résistance coude droit', 'Résistance hanche gauche', 'Résistance hanche droite', 'Résistance genou gauche', 'Résistance genou droit', 'Résistance cheville gauche', 'Résistance cheville droite', 'Résistance pied gauche', 'Résistance pied droit', 'Résistance diverse']
+  };
+
+  /* Stats méta hors compétences - ne comptent pas non plus dans le général. */
+  var META_CATEGORY = {
+    key: 'general', label: 'Général', bg: '#6B5E2E', fg: '#FFFFFF',
+    attrs: ['Caractère', 'Potentiel']
+  };
+
+  var ATTR_CATEGORIES = SKILL_CATEGORIES.concat([DURABILITY_CATEGORY, META_CATEGORY]);
+
+  var POSITION_CATEGORY_BIAS = {
+    'Meneur':      { finition: -6, shooting: 0,  playmaking: 10, defenseRebond: -6, physique: 4 },
+    'Arrière':     { finition: -2, shooting: 6,  playmaking: 2,  defenseRebond: -4, physique: 3 },
+    'Ailier':      { finition: 0,  shooting: 2,  playmaking: 0,  defenseRebond: 2,  physique: 2 },
+    'Ailier fort': { finition: 4,  shooting: -2, playmaking: -6, defenseRebond: 6,  physique: 1 },
+    'Pivot':       { finition: 6,  shooting: -8, playmaking: -10, defenseRebond: 9, physique: -3 }
+  };
+
+  var PHYSIQUE_BIAS = {
+    'Meneur':      { 'Vitesse': 10, 'Agilité': 8, 'Force': -10, 'Détente': 2,  'Endurance': 4,  'Pressing': 4 },
+    'Arrière':     { 'Vitesse': 6,  'Agilité': 5, 'Force': -4,  'Détente': 4,  'Endurance': 2,  'Pressing': 2 },
+    'Ailier':      { 'Vitesse': 2,  'Agilité': 2, 'Force': 0,   'Détente': 2,  'Endurance': 0,  'Pressing': 2 },
+    'Ailier fort': { 'Vitesse': -4, 'Agilité': -2, 'Force': 8,  'Détente': 0,  'Endurance': -2, 'Pressing': 0 },
+    'Pivot':       { 'Vitesse': -10, 'Agilité': -8, 'Force': 12, 'Détente': -2, 'Endurance': -4, 'Pressing': -2 }
+  };
+
+  /* Poids de chaque catégorie de compétence dans le calcul du général, par poste -
+     reflète le système positionnel de NBA 2K. Chaque ligne totalise 1.00.
+     La durabilité et les stats générales n'y entrent jamais, comme dans le jeu. */
+  var CATEGORY_WEIGHTS = {
+    'Meneur':      { finition: 0.10, shooting: 0.20, playmaking: 0.30, defenseRebond: 0.20, physique: 0.20 },
+    'Arrière':     { finition: 0.12, shooting: 0.28, playmaking: 0.15, defenseRebond: 0.20, physique: 0.25 },
+    'Ailier':      { finition: 0.14, shooting: 0.20, playmaking: 0.12, defenseRebond: 0.28, physique: 0.26 },
+    'Ailier fort': { finition: 0.20, shooting: 0.12, playmaking: 0.06, defenseRebond: 0.42, physique: 0.20 },
+    'Pivot':       { finition: 0.24, shooting: 0.05, playmaking: 0.04, defenseRebond: 0.52, physique: 0.15 }
+  };
+
+  var STRENGTH_TO_ATTRS = {
+    'Création de tir': ['Tirs à mi-distance', 'Contrôle du ballon'],
+    'Tir longue distance': ['Tirs à 3 pts'],
+    'Vision de jeu': ['Vision des passes', 'QI passes'],
+    'Qualité de passe': ['Précision des passes', 'Contrôle du ballon'],
+    'Explosivité': ['Détente', 'Vitesse'],
+    'Attaque du cercle': ['Dunk en pénétration', 'Contrôle au poste'],
+    'Défense sur porteur': ['Défense extérieure', 'Interception'],
+    'Anticipation des passes': ['Interception', 'Perception des passes'],
+    'Tir à 3 points': ['Tirs à 3 pts'],
+    'Déplacement sans ballon': ['Vitesse', 'Agilité'],
+    'Volume de scoring': ['Tirs de près', 'Tirs à mi-distance'],
+    'Finition au cercle': ['Dunk en pénétration', 'Dunk sans élan'],
+    'Création en isolement': ['Contrôle du ballon'],
+    'Tir mi-distance': ['Tirs à mi-distance'],
+    'Défense sur ailier': ['Défense extérieure'],
+    'Activité défensive': ['Interception', 'Contre'],
+    'Tir extérieur': ['Tirs à 3 pts'],
+    'Défense polyvalente': ['Défense extérieure', 'Défense intérieure'],
+    'Création de jeu': ['Vision des passes', 'QI passes'],
+    'Polyvalence offensive': ['Tirs à mi-distance', 'Contrôle du ballon'],
+    'Mouvement sans ballon': ['Vitesse', 'Agilité'],
+    'Défense sur plusieurs postes': ['Défense extérieure', 'Défense intérieure'],
+    'Anticipation': ['Interception'],
+    'Espacement du terrain': ['Tirs à 3 pts'],
+    'Polyvalence': ['Contrôle au poste', 'Précision des passes'],
+    'Facilitation': ['Précision des passes'],
+    'Contres': ['Contre'],
+    'Défense intérieure': ['Défense intérieure'],
+    'Jeu au poste': ['Contrôle au poste'],
+    'Finition près du cercle': ['Dunk sans élan', 'Tirs de près'],
+    'Alley-oop': ['Dunk en pénétration'],
+    'Rebond offensif': ['Rebond offensif']
+  };
+
+  var drawBtn = document.getElementById('drawBtn');
+  var progressLabel = document.getElementById('progressLabel');
+  var progressFrac = document.getElementById('progressFrac');
+  var progressFill = document.getElementById('progressFill');
+  var hint = document.getElementById('hint');
+  var table = document.getElementById('statTable');
+
+  var page1 = document.getElementById('page1');
+  var page2 = document.getElementById('page2');
+  var page3 = document.getElementById('page3');
+  var attrBtn = document.getElementById('attrBtn');
+  var saveBtn = document.getElementById('saveBtn');
+  var attrHint = document.getElementById('attrHint');
+  var attrLede = document.getElementById('attrLede');
+  var attrList = document.getElementById('attrList');
+  var backBtn = document.getElementById('backBtn');
+  var rosterNavBtn = document.getElementById('rosterNavBtn');
+  var rosterBackBtn = document.getElementById('rosterBackBtn');
+  var rosterList = document.getElementById('rosterList');
+
+  var page4 = document.getElementById('page4');
+  var progNavBtn = document.getElementById('progNavBtn');
+  var progBackBtn = document.getElementById('progBackBtn');
+  var progPlayerSelect = document.getElementById('progPlayerSelect');
+  var progEmptyHint = document.getElementById('progEmptyHint');
+  var progFormCard = document.getElementById('progFormCard');
+  var statForm = document.getElementById('statForm');
+  var applyProgBtn = document.getElementById('applyProgBtn');
+  var progResultsCard = document.getElementById('progResultsCard');
+  var progOverallRow = document.getElementById('progOverallRow');
+  var progResultsList = document.getElementById('progResultsList');
+  var progSaveRow = document.getElementById('progSaveRow');
+  var saveProgBtn = document.getElementById('saveProgBtn');
+
+  var rows = {};
+  ['nom','nationalite','poste','taille','poids','envergure','style','comparaison','overall','points'].forEach(function(key){
+    rows[key] = table.querySelector('tr[data-row="' + key + '"]');
+  });
+
+  var step = 0;
+  var data = {};
+  var attrsDrawn = false;
+  var savedThisPlayer = false;
+
+  buildAttrList();
+  updateRosterCount();
+  render();
+
+  drawBtn.addEventListener('click', function(){
+    if (step >= STEPS.length) {
+      showPage2();
+      return;
+    }
+    drawStep(step);
+    step += 1;
+    render();
+  });
+
+  backBtn.addEventListener('click', function(){
+    page2.hidden = true;
+    page1.hidden = false;
+  });
+
+  attrBtn.addEventListener('click', function(){
+    if (attrsDrawn) {
+      reset();
+      return;
+    }
+    drawAttributes();
+  });
+
+  saveBtn.addEventListener('click', function(){
+    savePlayer();
+  });
+
+  rosterNavBtn.addEventListener('click', function(){
+    showPage3();
+  });
+
+  rosterBackBtn.addEventListener('click', function(){
+    page3.hidden = true;
+    page1.hidden = false;
+  });
+
+  progNavBtn.addEventListener('click', function(){
+    showPage4();
+  });
+
+  progBackBtn.addEventListener('click', function(){
+    page4.hidden = true;
+    page1.hidden = false;
+  });
+
+  progPlayerSelect.addEventListener('change', function(){
+    onProgPlayerSelected(progPlayerSelect.value);
+  });
+
+  applyProgBtn.addEventListener('click', function(){
+    applyProgression();
+  });
+
+  saveProgBtn.addEventListener('click', function(){
+    saveProgressionChanges();
+  });
+
+  function drawStep(i){
+    switch (i) {
+      case 0: {
+        var nat = NATIONALITIES[randInt(0, NATIONALITIES.length - 1)];
+        var prenom = nat.first[randInt(0, nat.first.length - 1)];
+        var nom = nat.last[randInt(0, nat.last.length - 1)];
+        data.nationalite = nat.name;
+        data.prenom = prenom;
+        data.nom = nom;
+        fillRow('nom', prenom + ' ' + nom);
+        fillRow('nationalite', nat.name);
+        break;
+      }
+      case 1: {
+        var poste = POSITIONS[randInt(0, POSITIONS.length - 1)];
+        data.poste = poste;
+        fillRow('poste', poste);
+        break;
+      }
+      case 2: {
+        var hRange = HEIGHT_RANGES[data.poste];
+        var inches = randInt(hRange[0], hRange[1]);
+        data.tailleInches = inches;
+        fillRow('taille', formatHeight(inches));
+        break;
+      }
+      case 3: {
+        var wRange = WEIGHT_RANGES[data.poste];
+        var poids = randInt(wRange[0], wRange[1]);
+        data.poids = poids;
+        fillRow('poids', poids + ' lbs');
+        break;
+      }
+      case 4: {
+        var extra = randInt(2, 6);
+        var envergure = data.tailleInches + extra;
+        data.envergureInches = envergure;
+        fillRow('envergure', formatHeight(envergure));
+        break;
+      }
+      case 5: {
+        var options = ARCHETYPES[data.poste];
+        var pick = options[randInt(0, options.length - 1)];
+        data.style = pick;
+        fillRow('style', pick.name);
+        break;
+      }
+      case 6: {
+        var players = data.style.players;
+        var comp = players[randInt(0, players.length - 1)];
+        data.comparaison = comp;
+        fillRow('comparaison', comp);
+        break;
+      }
+      case 7: {
+        var overall = randInt(60, 75);
+        data.overall = overall;
+        fillRow('overall', overall + ' OVR');
+        fillRow('points', data.style.strengths.join(', '));
+        break;
+      }
+    }
+  }
+
+  function fillRow(key, value){
+    var row = rows[key];
+    row.classList.remove('is-empty');
+    row.classList.remove('is-filled');
+    row.querySelector('.value').textContent = value;
+    void row.offsetWidth;
+    row.classList.add('is-filled');
+  }
+
+  function render(){
+    progressFrac.textContent = Math.min(step, STEPS.length) + '/8';
+    progressFill.style.width = (Math.min(step, STEPS.length) / STEPS.length * 100) + '%';
+
+    if (step < STEPS.length) {
+      progressLabel.innerHTML = 'Étape <b>' + (step + 1) + '</b> sur 8 - ' + STEPS[step].label;
+      drawBtn.textContent = STEPS[step].button;
+      drawBtn.classList.remove('is-reset');
+      hint.textContent = HINTS[step];
+    } else {
+      progressLabel.innerHTML = '<b>Profil complet</b> - 8 sur 8';
+      drawBtn.textContent = 'Voir les attributs du joueur';
+      drawBtn.classList.remove('is-reset');
+      hint.textContent = 'Le profil est prêt. Passez à la page suivante pour tirer les attributs détaillés.';
+    }
+  }
+
+  function reset(){
+    step = 0;
+    data = {};
+    attrsDrawn = false;
+    savedThisPlayer = false;
+    Object.keys(rows).forEach(function(key){
+      var row = rows[key];
+      row.classList.add('is-empty');
+      row.classList.remove('is-filled');
+      row.querySelector('.value').textContent = '-';
+    });
+    resetAttrList();
+    page2.hidden = true;
+    page3.hidden = true;
+    page4.hidden = true;
+    page1.hidden = false;
+    render();
+  }
+
+  function randInt(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function formatHeight(totalInches){
+    var feet = Math.floor(totalInches / 12);
+    var inches = totalInches % 12;
+    return feet + "'" + inches + '"';
+  }
+
+  /* ---------- Page 2 : attributs ---------- */
+
+  function showPage2(){
+    attrEyebrowUpdate();
+    page1.hidden = true;
+    page2.hidden = false;
+  }
+
+  function attrEyebrowUpdate(){
+    document.getElementById('attrEyebrow').textContent = data.prenom + ' ' + data.nom + ' · ' + data.nationalite + ' · ' + data.poste;
+    attrLede.textContent = 'Les attributs de ' + data.prenom + ' sont générés à partir du poste (' + data.poste + '), du style de jeu (' + data.style.name + ') et des points forts tirés à la page précédente.';
+  }
+
+  function buildAttrList(){
+    attrList.innerHTML = '';
+    ATTR_CATEGORIES.forEach(function(cat){
+      var group = document.createElement('div');
+      group.className = 'attr-group';
+      group.style.background = cat.bg;
+      group.style.color = cat.fg;
+
+      var label = document.createElement('p');
+      label.className = 'attr-group-label';
+      label.textContent = cat.label;
+      group.appendChild(label);
+
+      cat.attrs.forEach(function(name){
+        var row = document.createElement('div');
+        row.className = 'attr-row';
+        row.setAttribute('data-attr', name);
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'attr-name';
+        nameEl.textContent = name;
+
+        var valueEl = document.createElement('span');
+        valueEl.className = 'attr-value';
+        valueEl.textContent = '-';
+
+        row.appendChild(nameEl);
+        row.appendChild(valueEl);
+        group.appendChild(row);
+      });
+
+      attrList.appendChild(group);
+    });
+  }
+
+  function resetAttrList(){
+    var rowsEl = attrList.querySelectorAll('.attr-row');
+    rowsEl.forEach(function(r){
+      r.classList.remove('is-filled');
+      r.querySelector('.attr-value').textContent = '-';
+    });
+    attrBtn.textContent = 'Tirer les attributs du joueur';
+    attrBtn.classList.remove('is-reset');
+    attrHint.textContent = 'Un seul tirage révèle les 34 attributs de jeu, regroupés par catégorie, plus la durabilité et les stats générales.';
+    saveBtn.hidden = true;
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Sauvegarder ce joueur';
+  }
+
+  function buildAttrWeights(poste){
+    var catW = CATEGORY_WEIGHTS[poste];
+    var weights = {};
+    SKILL_CATEGORIES.forEach(function(cat){
+      var perAttr = catW[cat.key] / cat.attrs.length;
+      cat.attrs.forEach(function(name){ weights[name] = perAttr; });
+    });
+    return weights;
+  }
+
+  function weightedAvg(values, weights){
+    var sum = 0;
+    Object.keys(weights).forEach(function(k){ sum += weights[k] * values[k]; });
+    return sum;
+  }
+
+  /* Construit les 34 attributs de compétence pour que leur moyenne pondérée par
+     poste (à la manière du système positionnel de NBA 2K) retombe exactement
+     sur le général déjà annoncé à la page précédente. Étape 1 : résout des
+     valeurs continues centrées sur le général cible. */
+  function solveAttributeValues(target, weights, deltaMap, names){
+    var values = {};
+    names.forEach(function(n){ values[n] = target + deltaMap[n]; });
+
+    var diff = target - weightedAvg(values, weights);
+    names.forEach(function(n){ values[n] += diff; });
+
+    var clamped = {};
+    for (var iter = 0; iter < 8; iter++) {
+      var changed = false;
+      names.forEach(function(n){
+        if (!clamped[n]) {
+          if (values[n] > 90) { values[n] = 90; clamped[n] = true; changed = true; }
+          else if (values[n] < 25) { values[n] = 25; clamped[n] = true; changed = true; }
+        }
+      });
+      var err = target - weightedAvg(values, weights);
+      if (Math.abs(err) < 0.01 && !changed) break;
+      var freeWeightSum = 0;
+      names.forEach(function(n){ if (!clamped[n]) freeWeightSum += weights[n]; });
+      if (freeWeightSum <= 0) break;
+      var x = err / freeWeightSum;
+      names.forEach(function(n){ if (!clamped[n]) values[n] += x; });
+    }
+
+    return { values: values, clamped: clamped };
+  }
+
+  /* Étape 2 : arrondit les 34 valeurs à l'entier tout en garantissant que
+     la moyenne pondérée arrondie retombe exactement sur le général annoncé -
+     l'arrondi indépendant de 34 nombres peut sinon dériver de +/-1 point. */
+  function finalizeAttributeValues(target, weights, names, solved){
+    var values = solved.values;
+    var clamped = solved.clamped;
+
+    var candidates = names.filter(function(n){ return !clamped[n]; });
+    if (candidates.length === 0) candidates = names.slice();
+    var adjuster = candidates.reduce(function(best, n){
+      return weights[n] > weights[best] ? n : best;
+    }, candidates[0]);
+
+    var rounded = {};
+    names.forEach(function(n){
+      if (n !== adjuster) rounded[n] = Math.round(clamp(values[n], 25, 90));
+    });
+    var sumOthers = 0;
+    names.forEach(function(n){ if (n !== adjuster) sumOthers += weights[n] * rounded[n]; });
+    var exact = (target - sumOthers) / weights[adjuster];
+    rounded[adjuster] = Math.round(clamp(exact, 25, 90));
+    return rounded;
+  }
+
+  function drawAttributes(){
+    var boosted = {};
+    data.style.strengths.forEach(function(s){
+      (STRENGTH_TO_ATTRS[s] || []).forEach(function(a){ boosted[a] = true; });
+    });
+
+    var catBias = POSITION_CATEGORY_BIAS[data.poste];
+    var physBias = PHYSIQUE_BIAS[data.poste];
+
+    var names = [];
+    var deltaMap = {};
+    SKILL_CATEGORIES.forEach(function(cat){
+      cat.attrs.forEach(function(name){
+        var bias = catBias[cat.key] || 0;
+        var fine = (cat.key === 'physique' && physBias[name] !== undefined) ? physBias[name] : 0;
+        var noise = randInt(-6, 6);
+        var boost = boosted[name] ? randInt(8, 15) : 0;
+        names.push(name);
+        deltaMap[name] = bias + fine + noise + boost;
+      });
+    });
+
+    var weights = buildAttrWeights(data.poste);
+    var solved = solveAttributeValues(data.overall, weights, deltaMap, names);
+    var values = finalizeAttributeValues(data.overall, weights, names, solved);
+    var recomputed = Math.round(weightedAvg(values, weights));
+
+    /* Durabilité : indépendante du général, comme dans le jeu. */
+    DURABILITY_CATEGORY.attrs.forEach(function(name){
+      values[name] = randInt(60, 97);
+    });
+
+    /* Stats générales : indépendantes du général. Le potentiel dépasse
+       toujours l'overall actuel pour représenter la marge de progression. */
+    values['Caractère'] = randInt(40, 99);
+    values['Potentiel'] = clamp(data.overall + randInt(8, 25), data.overall + 5, 99);
+
+    ATTR_CATEGORIES.forEach(function(cat){
+      cat.attrs.forEach(function(name){
+        var row = attrList.querySelector('.attr-row[data-attr="' + name + '"]');
+        row.querySelector('.attr-value').textContent = values[name];
+        row.classList.remove('is-filled');
+        void row.offsetWidth;
+        row.classList.add('is-filled');
+      });
+    });
+
+    data.attributs = values;
+
+    attrsDrawn = true;
+    attrBtn.textContent = 'Recommencer';
+    attrBtn.classList.add('is-reset');
+    saveBtn.hidden = false;
+    attrHint.textContent = 'Général recalculé à partir des 34 attributs de jeu (pondération par poste) : ' + recomputed + ' OVR - cohérent avec les ' + data.overall + ' OVR annoncés. La durabilité et les stats générales ne comptent pas dans ce calcul, comme dans NBA 2K.';
+  }
+
+  /* ---------- Sauvegarde de l'effectif (localStorage) ---------- */
+
+  function loadRoster(){
+    try {
+      var raw = localStorage.getItem(ROSTER_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRosterList(list){
+    try {
+      localStorage.setItem(ROSTER_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateRosterCount(){
+    var roster = loadRoster();
+    rosterNavBtn.textContent = 'Mon effectif (' + roster.length + ')';
+  }
+
+  function savePlayer(){
+    if (savedThisPlayer) return;
+
+    var roster = loadRoster();
+    var player = {
+      id: Date.now() + '-' + Math.floor(Math.random() * 1000),
+      prenom: data.prenom,
+      nom: data.nom,
+      nationalite: data.nationalite,
+      poste: data.poste,
+      tailleInches: data.tailleInches,
+      poids: data.poids,
+      envergureInches: data.envergureInches,
+      style: data.style.name,
+      pointsForts: data.style.strengths,
+      comparaison: data.comparaison,
+      overall: data.overall,
+      attributs: data.attributs,
+      createdAt: new Date().toISOString()
+    };
+    roster.push(player);
+    var ok = saveRosterList(roster);
+
+    if (ok) {
+      savedThisPlayer = true;
+      saveBtn.textContent = 'Joueur enregistré';
+      saveBtn.disabled = true;
+      updateRosterCount();
+    } else {
+      saveBtn.textContent = "Échec de l'enregistrement - réessayer";
+    }
+  }
+
+  function deletePlayer(id){
+    var roster = loadRoster().filter(function(p){ return p.id !== id; });
+    saveRosterList(roster);
+    renderRoster();
+    updateRosterCount();
+  }
+
+  function showPage3(){
+    renderRoster();
+    page1.hidden = true;
+    page3.hidden = false;
+  }
+
+  function renderRoster(){
+    var roster = loadRoster();
+    rosterList.innerHTML = '';
+
+    if (roster.length === 0) {
+      var empty = document.createElement('p');
+      empty.className = 'roster-empty';
+      empty.textContent = "Aucun joueur sauvegardé pour l'instant. Terminez un tirage puis utilisez \"Sauvegarder ce joueur\".";
+      rosterList.appendChild(empty);
+      return;
+    }
+
+    roster.slice().reverse().forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'roster-row';
+
+      var info = document.createElement('div');
+      var name = document.createElement('div');
+      name.className = 'roster-name';
+      name.textContent = p.prenom + ' ' + p.nom;
+      var meta = document.createElement('div');
+      meta.className = 'roster-meta';
+      meta.textContent = p.nationalite + ' · ' + p.poste + ' · ' + p.style;
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      var right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.alignItems = 'center';
+
+      var overall = document.createElement('span');
+      overall.className = 'roster-overall';
+      overall.textContent = p.overall + ' OVR';
+
+      var del = document.createElement('button');
+      del.className = 'roster-delete';
+      del.type = 'button';
+      del.textContent = 'Supprimer';
+      del.addEventListener('click', function(){ deletePlayer(p.id); });
+
+      right.appendChild(overall);
+      right.appendChild(del);
+
+      row.appendChild(info);
+      row.appendChild(right);
+      rosterList.appendChild(row);
+    });
+  }
+
+  /* ---------- Progression de saison (page 4) ---------- */
+
+  var STAT_FIELDS = [
+    { key: 'mpg', label: 'Minutes par match' },
+    { key: 'ppg', label: 'Points par match' },
+    { key: 'rpg', label: 'Rebonds par match' },
+    { key: 'apg', label: 'Passes décisives par match' },
+    { key: 'spg', label: 'Interceptions par match' },
+    { key: 'bpg', label: 'Contres par match' },
+    { key: 'fgPct', label: 'Pourcentage au tir (%)' },
+    { key: 'threePct', label: 'Pourcentage à 3 points (%)' },
+    { key: 'ftPct', label: 'Pourcentage aux lancers francs (%)' },
+    { key: 'tov', label: 'Balles perdues par match' }
+  ];
+
+  /* Repères statistiques approximatifs par poste (mauvais / moyen / excellent),
+     utilisés pour juger si une moyenne de saison est bonne ou mauvaise POUR CE
+     POSTE - 8 rebonds sont médiocres pour un pivot mais excellents pour un meneur. */
+  var STAT_BENCHMARKS = {
+    mpg: { ALL: { poor: 14, avg: 24, great: 34 } },
+    ppg: {
+      'Meneur': { poor: 6, avg: 12, great: 20 },
+      'Arrière': { poor: 8, avg: 14, great: 22 },
+      'Ailier': { poor: 8, avg: 13, great: 20 },
+      'Ailier fort': { poor: 7, avg: 12, great: 18 },
+      'Pivot': { poor: 6, avg: 11, great: 17 }
+    },
+    rpg: {
+      'Meneur': { poor: 2, avg: 3.5, great: 6 },
+      'Arrière': { poor: 2.5, avg: 4, great: 6.5 },
+      'Ailier': { poor: 3.5, avg: 5.5, great: 8 },
+      'Ailier fort': { poor: 5, avg: 7.5, great: 10.5 },
+      'Pivot': { poor: 6, avg: 9, great: 12.5 }
+    },
+    apg: {
+      'Meneur': { poor: 3, avg: 6, great: 9.5 },
+      'Arrière': { poor: 2, avg: 3.5, great: 6 },
+      'Ailier': { poor: 1.5, avg: 3, great: 5 },
+      'Ailier fort': { poor: 1, avg: 2, great: 3.5 },
+      'Pivot': { poor: 1, avg: 2, great: 3.5 }
+    },
+    spg: {
+      'Meneur': { poor: 0.6, avg: 1.1, great: 1.8 },
+      'Arrière': { poor: 0.6, avg: 1.0, great: 1.6 },
+      'Ailier': { poor: 0.6, avg: 1.0, great: 1.6 },
+      'Ailier fort': { poor: 0.5, avg: 0.8, great: 1.3 },
+      'Pivot': { poor: 0.4, avg: 0.7, great: 1.2 }
+    },
+    bpg: {
+      'Meneur': { poor: 0.1, avg: 0.3, great: 0.7 },
+      'Arrière': { poor: 0.1, avg: 0.3, great: 0.6 },
+      'Ailier': { poor: 0.2, avg: 0.5, great: 1.0 },
+      'Ailier fort': { poor: 0.4, avg: 0.8, great: 1.5 },
+      'Pivot': { poor: 0.6, avg: 1.3, great: 2.3 }
+    },
+    fgPct: {
+      'Meneur': { poor: 38, avg: 44, great: 50 },
+      'Arrière': { poor: 38, avg: 44, great: 49 },
+      'Ailier': { poor: 40, avg: 46, great: 52 },
+      'Ailier fort': { poor: 42, avg: 48, great: 55 },
+      'Pivot': { poor: 46, avg: 54, great: 62 }
+    },
+    threePct: { ALL: { poor: 28, avg: 35, great: 40 } },
+    ftPct: { ALL: { poor: 65, avg: 75, great: 85 } },
+    tov: {
+      'Meneur': { great: 1.8, avg: 2.6, poor: 4.0 },
+      'Arrière': { great: 1.2, avg: 1.8, poor: 2.8 },
+      'Ailier': { great: 1.0, avg: 1.6, poor: 2.5 },
+      'Ailier fort': { great: 1.0, avg: 1.5, poor: 2.3 },
+      'Pivot': { great: 1.0, avg: 1.5, poor: 2.3 }
+    }
+  };
+
+  var INVERTED_STATS = { tov: true };
+  var DELTA_SCALE = 6;
+
+  var progCurrentPlayer = null;
+  var progLastResult = null;
+
+  function clampNum(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function statScore(value, bench, inverted){
+    if (isNaN(value)) return 0;
+    if (inverted) {
+      if (value <= bench.avg) {
+        if (bench.avg === bench.great) return 0;
+        return clampNum((bench.avg - value) / (bench.avg - bench.great), -1.5, 1.5);
+      }
+      if (bench.poor === bench.avg) return 0;
+      return clampNum((bench.avg - value) / (bench.poor - bench.avg), -1.5, 1.5);
+    }
+    if (value >= bench.avg) {
+      if (bench.great === bench.avg) return 0;
+      return clampNum((value - bench.avg) / (bench.great - bench.avg), -1.5, 1.5);
+    }
+    if (bench.avg === bench.poor) return 0;
+    return clampNum((value - bench.avg) / (bench.avg - bench.poor), -1.5, 1.5);
+  }
+
+  function getBenchmark(statKey, poste){
+    var table = STAT_BENCHMARKS[statKey];
+    return table.ALL || table[poste];
+  }
+
+  function showPage4(){
+    renderProgPlayerSelect();
+    page1.hidden = true;
+    page4.hidden = false;
+  }
+
+  function renderProgPlayerSelect(){
+    var roster = loadRoster();
+    progPlayerSelect.innerHTML = '<option value="">Choisir un joueur sauvegardé...</option>';
+    roster.forEach(function(p){
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.prenom + ' ' + p.nom + ' - ' + p.poste + ' - ' + p.overall + ' OVR';
+      progPlayerSelect.appendChild(opt);
+    });
+    progEmptyHint.hidden = roster.length > 0;
+    progFormCard.hidden = true;
+    progResultsCard.hidden = true;
+    progSaveRow.hidden = true;
+    progCurrentPlayer = null;
+    progLastResult = null;
+  }
+
+  function onProgPlayerSelected(id){
+    if (!id) {
+      progFormCard.hidden = true;
+      progResultsCard.hidden = true;
+      progSaveRow.hidden = true;
+      progCurrentPlayer = null;
+      return;
+    }
+    var roster = loadRoster();
+    progCurrentPlayer = roster.find(function(p){ return p.id === id; }) || null;
+    progLastResult = null;
+    progResultsCard.hidden = true;
+    progSaveRow.hidden = true;
+    saveProgBtn.textContent = "Enregistrer l'évolution";
+    saveProgBtn.disabled = false;
+    if (progCurrentPlayer) {
+      buildStatForm();
+      progFormCard.hidden = false;
+    }
+  }
+
+  function buildStatForm(){
+    statForm.innerHTML = '';
+    STAT_FIELDS.forEach(function(f){
+      var field = document.createElement('div');
+      field.className = 'stat-field';
+
+      var label = document.createElement('label');
+      label.setAttribute('for', 'stat-' + f.key);
+      label.textContent = f.label;
+
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.step = '0.1';
+      input.min = '0';
+      input.id = 'stat-' + f.key;
+      input.setAttribute('data-stat', f.key);
+
+      field.appendChild(label);
+      field.appendChild(input);
+      statForm.appendChild(field);
+    });
+  }
+
+  function readStatForm(){
+    var values = {};
+    STAT_FIELDS.forEach(function(f){
+      var input = document.getElementById('stat-' + f.key);
+      var v = parseFloat(input.value);
+      values[f.key] = isNaN(v) ? null : v;
+    });
+    return values;
+  }
+
+  function applyProgression(){
+    if (!progCurrentPlayer) return;
+    var poste = progCurrentPlayer.poste;
+    var stats = readStatForm();
+
+    var scores = {};
+    STAT_FIELDS.forEach(function(f){
+      var bench = getBenchmark(f.key, poste);
+      var value = stats[f.key];
+      scores[f.key] = (value === null) ? 0 : statScore(value, bench, !!INVERTED_STATS[f.key]);
+    });
+
+    var scoringScore = (scores.ppg + scores.fgPct) / 2;
+    var passScore = scores.apg;
+    var ballControlScore = (scores.apg + scores.tov) / 2;
+    var handleSpeedScore = (scores.apg + scores.tov) / 2 * 0.7;
+    var perimDefScore = scores.spg;
+    var interiorDefScore = (scores.bpg + scores.spg * 0.4);
+    var blockScore = scores.bpg;
+    var reboundScore = scores.rpg;
+    var threeScore = scores.threePct;
+    var ftScore = scores.ftPct;
+    var mpgScore = scores.mpg;
+
+    var attrDeltaFactors = {
+      'Tirs de près': scoringScore,
+      'Dunk en pénétration': scoringScore * 0.8,
+      'Dunk sans élan': scoringScore * 0.7,
+      'Double-pas en pénétration': scoringScore * 0.8,
+      'Bras roulé au poste': scoringScore * 0.6,
+      'Fadeaway au poste': scoringScore * 0.6,
+      'Contrôle au poste': scoringScore * 0.7,
+      'Adresse': scoringScore * 0.7,
+      'Provocation de faute': scoringScore * 0.6,
+
+      'Tirs à mi-distance': scoringScore,
+      'Tirs à 3 pts': threeScore,
+      'Lancer franc': ftScore,
+      'Intelligence de tir': scoringScore * 0.5,
+      'Régularité offensive': scoringScore * 0.5,
+
+      'Contrôle du ballon': ballControlScore,
+      'Vitesse avec ballon': handleSpeedScore,
+      'Précision des passes': passScore,
+      'QI passes': passScore * 0.7,
+      'Vision des passes': passScore * 0.7,
+
+      'Rebond défensif': reboundScore,
+      'Rebond offensif': reboundScore,
+      'Défense intérieure': interiorDefScore,
+      'Défense extérieure': perimDefScore,
+      'Contre': blockScore,
+      'Interception': scores.spg,
+      'Perception des passes': perimDefScore * 0.6,
+      'Régularité défensive': (perimDefScore + interiorDefScore) / 2 * 0.6,
+      'Intelligence de soutien défensif': (interiorDefScore + blockScore) / 2 * 0.6,
+
+      'Agilité': 0,
+      'Vitesse': 0,
+      'Détente': 0,
+      'Force': 0,
+      'Endurance': mpgScore,
+      'Pressing': mpgScore * 0.5
+    };
+
+    var oldAttrs = progCurrentPlayer.attributs || {};
+    var newAttrs = {};
+    Object.keys(oldAttrs).forEach(function(name){ newAttrs[name] = oldAttrs[name]; });
+    var deltas = {};
+    Object.keys(attrDeltaFactors).forEach(function(name){
+      var oldVal = oldAttrs[name] !== undefined ? oldAttrs[name] : progCurrentPlayer.overall;
+      var rawDelta = attrDeltaFactors[name] * DELTA_SCALE;
+      var newVal = clampNum(Math.round(oldVal + rawDelta), 25, 99);
+      newAttrs[name] = newVal;
+      deltas[name] = newVal - oldVal;
+    });
+
+    var weights = buildAttrWeights(poste);
+    var oldOverall = progCurrentPlayer.overall;
+    var newOverall = Math.round(weightedAvg(newAttrs, weights));
+
+    progLastResult = { attrs: newAttrs, deltas: deltas, oldOverall: oldOverall, newOverall: newOverall };
+    renderProgressionResults();
+  }
+
+  function renderProgressionResults(){
+    if (!progLastResult) return;
+
+    progOverallRow.innerHTML = '';
+    var labelEl = document.createElement('span');
+    labelEl.className = 'label';
+    labelEl.textContent = 'Overall';
+    var valueEl = document.createElement('span');
+    valueEl.className = 'value';
+    valueEl.textContent = progLastResult.oldOverall + ' \u2192 ' + progLastResult.newOverall + ' OVR';
+    progOverallRow.appendChild(labelEl);
+    progOverallRow.appendChild(valueEl);
+
+    progResultsList.innerHTML = '';
+    ATTR_CATEGORIES.forEach(function(cat){
+      var group = document.createElement('div');
+      group.className = 'attr-group';
+      group.style.background = cat.bg;
+      group.style.color = cat.fg;
+
+      var label = document.createElement('p');
+      label.className = 'attr-group-label';
+      label.textContent = cat.label;
+      group.appendChild(label);
+
+      cat.attrs.forEach(function(name){
+        var row = document.createElement('div');
+        row.className = 'prog-row';
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'attr-name';
+        nameEl.textContent = name;
+
+        var change = document.createElement('span');
+        change.className = 'prog-change';
+        var delta = progLastResult.deltas[name] || 0;
+        var newVal = progLastResult.attrs[name];
+        var deltaText = delta > 0 ? ('+' + delta) : (delta < 0 ? String(delta) : '\u00B10');
+        var deltaClass = delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat');
+        change.innerHTML = newVal + ' <span class="prog-delta ' + deltaClass + '">(' + deltaText + ')</span>';
+
+        row.appendChild(nameEl);
+        row.appendChild(change);
+        group.appendChild(row);
+      });
+
+      progResultsList.appendChild(group);
+    });
+
+    progResultsCard.hidden = false;
+    progSaveRow.hidden = false;
+  }
+
+  function saveProgressionChanges(){
+    if (!progCurrentPlayer || !progLastResult) return;
+    var roster = loadRoster();
+    var idx = roster.findIndex(function(p){ return p.id === progCurrentPlayer.id; });
+    if (idx === -1) return;
+
+    roster[idx].attributs = progLastResult.attrs;
+    roster[idx].overall = progLastResult.newOverall;
+    saveRosterList(roster);
+    progCurrentPlayer = roster[idx];
+
+    var opt = progPlayerSelect.querySelector('option[value="' + progCurrentPlayer.id + '"]');
+    if (opt) {
+      opt.textContent = progCurrentPlayer.prenom + ' ' + progCurrentPlayer.nom + ' - ' + progCurrentPlayer.poste + ' - ' + progCurrentPlayer.overall + ' OVR';
+    }
+
+    saveProgBtn.textContent = 'Évolution enregistrée';
+    saveProgBtn.disabled = true;
+  }
+})();
+</script>
+
+</body>
+</html>

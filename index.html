@@ -558,7 +558,7 @@
     <header>
       <p class="eyebrow">Générateur MyNBA</p>
       <h1>Progression de saison</h1>
-      <p class="lede">Choisissez un joueur sauvegardé, entrez ses statistiques de la saison, et ses attributs progressent selon ses performances et son poste. Jusqu'à 5 progressions par saison.</p>
+      <p class="lede">Choisissez un joueur sauvegardé, entrez ses statistiques de la saison : chaque amélioration par rapport à sa dernière progression (0 au départ) fait progresser les attributs liés. Stagner ou reculer ne fait jamais baisser un attribut. Jusqu'à 5 progressions par saison.</p>
     </header>
 
     <div class="card">
@@ -1241,6 +1241,7 @@
       attributs: data.attributs,
       season: 1,
       progressionsThisSeason: 0,
+      lastStats: {},
       createdAt: new Date().toISOString()
     };
     roster.push(player);
@@ -1333,62 +1334,23 @@
     { key: 'tov', label: 'Balles perdues par match' }
   ];
 
-  /* Repères statistiques approximatifs par poste (mauvais / moyen / excellent),
-     utilisés pour juger si une moyenne de saison est bonne ou mauvaise POUR CE
-     POSTE - 8 rebonds sont médiocres pour un pivot mais excellents pour un meneur. */
-  var STAT_BENCHMARKS = {
-    mpg: { ALL: { poor: 14, avg: 24, great: 34 } },
-    ppg: {
-      'Meneur': { poor: 6, avg: 12, great: 20 },
-      'Arrière': { poor: 8, avg: 14, great: 22 },
-      'Ailier': { poor: 8, avg: 13, great: 20 },
-      'Ailier fort': { poor: 7, avg: 12, great: 18 },
-      'Pivot': { poor: 6, avg: 11, great: 17 }
-    },
-    rpg: {
-      'Meneur': { poor: 2, avg: 3.5, great: 6 },
-      'Arrière': { poor: 2.5, avg: 4, great: 6.5 },
-      'Ailier': { poor: 3.5, avg: 5.5, great: 8 },
-      'Ailier fort': { poor: 5, avg: 7.5, great: 10.5 },
-      'Pivot': { poor: 6, avg: 9, great: 12.5 }
-    },
-    apg: {
-      'Meneur': { poor: 3, avg: 6, great: 9.5 },
-      'Arrière': { poor: 2, avg: 3.5, great: 6 },
-      'Ailier': { poor: 1.5, avg: 3, great: 5 },
-      'Ailier fort': { poor: 1, avg: 2, great: 3.5 },
-      'Pivot': { poor: 1, avg: 2, great: 3.5 }
-    },
-    spg: {
-      'Meneur': { poor: 0.6, avg: 1.1, great: 1.8 },
-      'Arrière': { poor: 0.6, avg: 1.0, great: 1.6 },
-      'Ailier': { poor: 0.6, avg: 1.0, great: 1.6 },
-      'Ailier fort': { poor: 0.5, avg: 0.8, great: 1.3 },
-      'Pivot': { poor: 0.4, avg: 0.7, great: 1.2 }
-    },
-    bpg: {
-      'Meneur': { poor: 0.1, avg: 0.3, great: 0.7 },
-      'Arrière': { poor: 0.1, avg: 0.3, great: 0.6 },
-      'Ailier': { poor: 0.2, avg: 0.5, great: 1.0 },
-      'Ailier fort': { poor: 0.4, avg: 0.8, great: 1.5 },
-      'Pivot': { poor: 0.6, avg: 1.3, great: 2.3 }
-    },
-    fgPct: {
-      'Meneur': { poor: 38, avg: 44, great: 50 },
-      'Arrière': { poor: 38, avg: 44, great: 49 },
-      'Ailier': { poor: 40, avg: 46, great: 52 },
-      'Ailier fort': { poor: 42, avg: 48, great: 55 },
-      'Pivot': { poor: 46, avg: 54, great: 62 }
-    },
-    threePct: { ALL: { poor: 28, avg: 35, great: 40 } },
-    ftPct: { ALL: { poor: 65, avg: 75, great: 85 } },
-    tov: {
-      'Meneur': { great: 1.8, avg: 2.6, poor: 4.0 },
-      'Arrière': { great: 1.2, avg: 1.8, poor: 2.8 },
-      'Ailier': { great: 1.0, avg: 1.6, poor: 2.5 },
-      'Ailier fort': { great: 1.0, avg: 1.5, poor: 2.3 },
-      'Pivot': { great: 1.0, avg: 1.5, poor: 2.3 }
-    }
+  /* Chaque statistique est comparée à celle du même joueur lors de sa
+     progression précédente (0 au départ, avant toute saison jouée) - pas à
+     une moyenne NBA. Une amélioration fait progresser les attributs liés ;
+     stagner ou reculer ne fait ni progresser ni reculer un attribut.
+     IMPROVEMENT_SCALE indique l'ampleur d'amélioration qui vaut un score
+     maximal de 1 (1,5 pour une progression exceptionnelle). */
+  var IMPROVEMENT_SCALE = {
+    mpg: 10,
+    ppg: 8,
+    rpg: 4,
+    apg: 3,
+    spg: 0.6,
+    bpg: 0.6,
+    fgPct: 8,
+    threePct: 8,
+    ftPct: 8,
+    tov: 1.5
   };
 
   var INVERTED_STATS = { tov: true };
@@ -1401,27 +1363,16 @@
     return Math.max(min, Math.min(max, v));
   }
 
-  function statScore(value, bench, inverted){
-    if (isNaN(value)) return 0;
-    if (inverted) {
-      if (value <= bench.avg) {
-        if (bench.avg === bench.great) return 0;
-        return clampNum((bench.avg - value) / (bench.avg - bench.great), -1.5, 1.5);
-      }
-      if (bench.poor === bench.avg) return 0;
-      return clampNum((bench.avg - value) / (bench.poor - bench.avg), -1.5, 1.5);
-    }
-    if (value >= bench.avg) {
-      if (bench.great === bench.avg) return 0;
-      return clampNum((value - bench.avg) / (bench.great - bench.avg), -1.5, 1.5);
-    }
-    if (bench.avg === bench.poor) return 0;
-    return clampNum((value - bench.avg) / (bench.avg - bench.poor), -1.5, 1.5);
-  }
-
-  function getBenchmark(statKey, poste){
-    var table = STAT_BENCHMARKS[statKey];
-    return table.ALL || table[poste];
+  /* Le point de départ est 0 pour la toute première progression d'un joueur.
+     Ensuite, chaque statistique est comparée à celle de la progression
+     précédente. Score toujours >= 0 : stagner ou reculer ne fait jamais
+     baisser un attribut, seule une amélioration en fait progresser un peu. */
+  function statScore(current, previous, scale, inverted){
+    if (current === null || isNaN(current)) return 0;
+    var prev = (previous === undefined || previous === null) ? 0 : previous;
+    var delta = inverted ? (prev - current) : (current - prev);
+    if (!scale || scale <= 0) return 0;
+    return clampNum(delta / scale, 0, 1.5);
   }
 
   function showPage4(){
@@ -1452,6 +1403,7 @@
   function normalizeSeasonFields(player){
     if (player.season === undefined) player.season = 1;
     if (player.progressionsThisSeason === undefined) player.progressionsThisSeason = 0;
+    if (player.lastStats === undefined) player.lastStats = {};
   }
 
   function updateProgSeasonUI(){
@@ -1546,14 +1498,15 @@
 
   function applyProgression(){
     if (!progCurrentPlayer) return;
-    var poste = progCurrentPlayer.poste;
     var stats = readStatForm();
+    var prevStats = progCurrentPlayer.lastStats || {};
 
     var scores = {};
     STAT_FIELDS.forEach(function(f){
-      var bench = getBenchmark(f.key, poste);
       var value = stats[f.key];
-      scores[f.key] = (value === null) ? 0 : statScore(value, bench, !!INVERTED_STATS[f.key]);
+      var previous = prevStats[f.key];
+      var scale = IMPROVEMENT_SCALE[f.key];
+      scores[f.key] = statScore(value, previous, scale, !!INVERTED_STATS[f.key]);
     });
 
     var scoringScore = (scores.ppg + scores.fgPct) / 2;
@@ -1622,11 +1575,11 @@
       deltas[name] = newVal - oldVal;
     });
 
-    var weights = buildAttrWeights(poste);
+    var weights = buildAttrWeights(progCurrentPlayer.poste);
     var oldOverall = progCurrentPlayer.overall;
     var newOverall = Math.round(weightedAvg(newAttrs, weights));
 
-    progLastResult = { attrs: newAttrs, deltas: deltas, oldOverall: oldOverall, newOverall: newOverall };
+    progLastResult = { attrs: newAttrs, deltas: deltas, oldOverall: oldOverall, newOverall: newOverall, submittedStats: stats };
     renderProgressionResults();
   }
 
@@ -1693,6 +1646,14 @@
     roster[idx].attributs = progLastResult.attrs;
     roster[idx].overall = progLastResult.newOverall;
     roster[idx].progressionsThisSeason = Math.min(5, roster[idx].progressionsThisSeason + 1);
+
+    var mergedStats = {};
+    Object.keys(roster[idx].lastStats || {}).forEach(function(k){ mergedStats[k] = roster[idx].lastStats[k]; });
+    Object.keys(progLastResult.submittedStats).forEach(function(k){
+      if (progLastResult.submittedStats[k] !== null) mergedStats[k] = progLastResult.submittedStats[k];
+    });
+    roster[idx].lastStats = mergedStats;
+
     saveRosterList(roster);
     progCurrentPlayer = roster[idx];
 

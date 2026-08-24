@@ -558,7 +558,7 @@
     <header>
       <p class="eyebrow">Générateur MyNBA</p>
       <h1>Progression de saison</h1>
-      <p class="lede">Choisissez un joueur sauvegardé, entrez ses statistiques de la saison, et ses attributs montent ou descendent selon ses performances et son poste.</p>
+      <p class="lede">Choisissez un joueur sauvegardé, entrez ses statistiques de la saison, et ses attributs progressent selon ses performances et son poste. Jusqu'à 5 progressions par saison.</p>
     </header>
 
     <div class="card">
@@ -567,13 +567,15 @@
         <option value="">Choisir un joueur sauvegardé...</option>
       </select>
       <p class="hint" id="progEmptyHint" hidden>Aucun joueur sauvegardé. Créez-en un depuis le générateur puis revenez ici.</p>
+      <p class="hint" id="progSeasonInfo" hidden></p>
+      <button class="btn-secondary" id="newSeasonBtn" type="button" hidden>Nouvelle saison</button>
     </div>
 
     <div class="card" id="progFormCard" hidden>
       <p class="sheet-title">Statistiques de la saison (moyennes par match)</p>
       <div class="stat-form" id="statForm"></div>
       <button class="btn-draw" id="applyProgBtn" type="button">Appliquer la progression</button>
-      <p class="hint">Vitesse, agilité, force et détente ne bougent pas ici - ils reflètent des tests physiques, pas une saison jouée. Seule l'endurance évolue, en fonction des minutes par match.</p>
+      <p class="hint">Vitesse, agilité, force et détente ne bougent pas ici - ils reflètent des tests physiques, pas une saison jouée. L'endurance et le pressing évoluent avec les minutes par match. Une saison faible ne fait jamais reculer un attribut, elle donne simplement peu ou pas de progression.</p>
     </div>
 
     <div class="card attr-card" id="progResultsCard" hidden>
@@ -795,6 +797,8 @@
   var progBackBtn = document.getElementById('progBackBtn');
   var progPlayerSelect = document.getElementById('progPlayerSelect');
   var progEmptyHint = document.getElementById('progEmptyHint');
+  var progSeasonInfo = document.getElementById('progSeasonInfo');
+  var newSeasonBtn = document.getElementById('newSeasonBtn');
   var progFormCard = document.getElementById('progFormCard');
   var statForm = document.getElementById('statForm');
   var applyProgBtn = document.getElementById('applyProgBtn');
@@ -865,6 +869,10 @@
 
   progPlayerSelect.addEventListener('change', function(){
     onProgPlayerSelected(progPlayerSelect.value);
+  });
+
+  newSeasonBtn.addEventListener('click', function(){
+    startNewSeason();
   });
 
   applyProgBtn.addEventListener('click', function(){
@@ -1231,6 +1239,8 @@
       comparaison: data.comparaison,
       overall: data.overall,
       attributs: data.attributs,
+      season: 1,
+      progressionsThisSeason: 0,
       createdAt: new Date().toISOString()
     };
     roster.push(player);
@@ -1430,6 +1440,8 @@
       progPlayerSelect.appendChild(opt);
     });
     progEmptyHint.hidden = roster.length > 0;
+    progSeasonInfo.hidden = true;
+    newSeasonBtn.hidden = true;
     progFormCard.hidden = true;
     progResultsCard.hidden = true;
     progSaveRow.hidden = true;
@@ -1437,8 +1449,50 @@
     progLastResult = null;
   }
 
+  function normalizeSeasonFields(player){
+    if (player.season === undefined) player.season = 1;
+    if (player.progressionsThisSeason === undefined) player.progressionsThisSeason = 0;
+  }
+
+  function updateProgSeasonUI(){
+    if (!progCurrentPlayer) return;
+    normalizeSeasonFields(progCurrentPlayer);
+    var remaining = 5 - progCurrentPlayer.progressionsThisSeason;
+    progSeasonInfo.hidden = false;
+    newSeasonBtn.hidden = false;
+
+    if (remaining > 0) {
+      progSeasonInfo.textContent = 'Saison ' + progCurrentPlayer.season + ' - ' + progCurrentPlayer.progressionsThisSeason + '/5 progression(s) utilisée(s).';
+      buildStatForm();
+      progFormCard.hidden = false;
+    } else {
+      progSeasonInfo.textContent = 'Limite de 5 progressions atteinte pour la saison ' + progCurrentPlayer.season + '. Cliquez sur "Nouvelle saison" pour continuer.';
+      progFormCard.hidden = true;
+    }
+  }
+
+  function startNewSeason(){
+    if (!progCurrentPlayer) return;
+    var roster = loadRoster();
+    var idx = roster.findIndex(function(p){ return p.id === progCurrentPlayer.id; });
+    if (idx === -1) return;
+
+    normalizeSeasonFields(roster[idx]);
+    roster[idx].season += 1;
+    roster[idx].progressionsThisSeason = 0;
+    saveRosterList(roster);
+    progCurrentPlayer = roster[idx];
+
+    progLastResult = null;
+    progResultsCard.hidden = true;
+    progSaveRow.hidden = true;
+    updateProgSeasonUI();
+  }
+
   function onProgPlayerSelected(id){
     if (!id) {
+      progSeasonInfo.hidden = true;
+      newSeasonBtn.hidden = true;
       progFormCard.hidden = true;
       progResultsCard.hidden = true;
       progSaveRow.hidden = true;
@@ -1453,8 +1507,7 @@
     saveProgBtn.textContent = "Enregistrer l'évolution";
     saveProgBtn.disabled = false;
     if (progCurrentPlayer) {
-      buildStatForm();
-      progFormCard.hidden = false;
+      updateProgSeasonUI();
     }
   }
 
@@ -1563,6 +1616,7 @@
     Object.keys(attrDeltaFactors).forEach(function(name){
       var oldVal = oldAttrs[name] !== undefined ? oldAttrs[name] : progCurrentPlayer.overall;
       var rawDelta = attrDeltaFactors[name] * DELTA_SCALE;
+      rawDelta = Math.max(0, rawDelta); // progression uniquement à la hausse - une saison faible ne donne aucun gain mais ne fait jamais reculer un attribut
       var newVal = clampNum(Math.round(oldVal + rawDelta), 25, 99);
       newAttrs[name] = newVal;
       deltas[name] = newVal - oldVal;
@@ -1635,8 +1689,10 @@
     var idx = roster.findIndex(function(p){ return p.id === progCurrentPlayer.id; });
     if (idx === -1) return;
 
+    normalizeSeasonFields(roster[idx]);
     roster[idx].attributs = progLastResult.attrs;
     roster[idx].overall = progLastResult.newOverall;
+    roster[idx].progressionsThisSeason = Math.min(5, roster[idx].progressionsThisSeason + 1);
     saveRosterList(roster);
     progCurrentPlayer = roster[idx];
 
@@ -1647,6 +1703,7 @@
 
     saveProgBtn.textContent = 'Évolution enregistrée';
     saveProgBtn.disabled = true;
+    updateProgSeasonUI();
   }
 })();
 </script>
